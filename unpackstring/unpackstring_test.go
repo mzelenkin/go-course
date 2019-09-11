@@ -1,4 +1,4 @@
-package unpackString
+package unpackstring
 
 import (
 	"testing"

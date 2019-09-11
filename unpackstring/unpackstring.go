@@ -1,4 +1,4 @@
-package unpackString
+package unpackstring
 
 import (
 	"strings"
@@ -34,6 +34,7 @@ func UnpackString(s string) string {
 		isEscape = false
 	}
 
+	// Последний символ, если он есть нужно дописать в конец буфера
 	if prevChar != 0 {
 		ret.WriteRune(prevChar)
 	}
