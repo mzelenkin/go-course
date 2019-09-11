@@ -18,8 +18,7 @@ func TestUnpackString(t *testing.T) {
 
 	for param, ethalon := range variants {
 		if ret := UnpackString(param); ret != ethalon {
-			t.Errorf("%s = %s", param, ret)
-			t.Errorf("не работает, ожидалось %s, получено %s", ethalon, ret)
+			t.Errorf("Передано '%s', ожидалось '%s', получено '%s'", param, ethalon, ret)
 		}
 	}
 }
