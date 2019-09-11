@@ -5,14 +5,11 @@ import (
 	"unicode"
 )
 
-var prevChar rune
-var ret strings.Builder
-
 // Распаковывает строку s
 func UnpackString(s string) string {
-	prevChar = 0
+	var prevChar rune = 0
+	ret := strings.Builder{}
 	isEscape := false
-	ret = strings.Builder{}
 
 	for _, r := range s {
 		if r == '\\' && !isEscape {
@@ -21,7 +18,9 @@ func UnpackString(s string) string {
 		}
 
 		if !unicode.IsDigit(r) || isEscape {
-			writeCharIfNotEmpty()
+			if prevChar != 0 {
+				ret.WriteRune(prevChar)
+			}
 			prevChar = r
 		} else {
 			if unicode.IsDigit(r) && prevChar != 0 {
@@ -35,13 +34,9 @@ func UnpackString(s string) string {
 		isEscape = false
 	}
 
-	writeCharIfNotEmpty()
-
-	return ret.String()
-}
-
-func writeCharIfNotEmpty() {
 	if prevChar != 0 {
 		ret.WriteRune(prevChar)
 	}
+
+	return ret.String()
 }
