@@ -6,6 +6,7 @@ import (
 
 func TestUnpackString(t *testing.T) {
 	variants := map[string]string{
+		"я5Му2":    "яяяяяМуу",
 		"a2":       "aa",
 		"a2b5":     "aabbbbb",
 		"a4bc2d5e": "aaaabccddddde",
