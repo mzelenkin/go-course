@@ -1,6 +1,6 @@
 package linkedlist
 
-// Item это элемент списка
+// Item - элемент списка
 type Item struct {
 	value    interface{}
 	previous *Item
@@ -20,19 +20,4 @@ func (i Item) Prev() *Item {
 // Next возвращает ссылку на следующий элемент
 func (i Item) Next() *Item {
 	return i.next
-}
-
-// Устанавливает значение элемента
-func (i *Item) setValue(value interface{}) {
-	i.value = value
-}
-
-// Устаналивает ссылку на предыдущий элемент
-func (i *Item) SetPrevious(prevItem *Item) {
-	i.previous = prevItem
-}
-
-// Устаналивает ссылку на следующий элемент
-func (i *Item) SetNext(nextItem *Item) {
-	i.next = nextItem
 }
