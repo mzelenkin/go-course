@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync"
 	"sync/atomic"
 )
 
@@ -16,50 +17,42 @@ func RunTasks(tasks []Task, n int, maxErrors int) {
 	// Канал jobs используется как очередь задач
 	// Буфер канала выставляем равным n, хотя это и не принципиально,
 	// т.к. worker'ы все равно будут забирать задания по мере их выполнения
-	jobs := make(chan *Task, n)
-
-	// Флажки завершения работы worker'ов
-	done := make(chan bool, n)
+	jobs := make(chan Task, n)
 
 	// Счетчик ошибок
 	// Используем sync/atomic т.к. код получается более читаемый чем с mutex
 	var errorsCount int32
 
+	wg := sync.WaitGroup{}
+
 	// Запускаем n worker'ов
 	for i := 0; i < n; i++ {
 		go func() {
-			for {
-				job, more := <-jobs // Получение задания из очереди задач
+			for job := range jobs { // Получение задания из очереди задач
 
-				if more { // Если канал не закрыт, значит там еще есть задания
+				// Проверка на общее количество ошибок задач
+				// По условию д/з, если это число > аргумента maxErrors, то задание не выполняется
+				// В этом случае, т.к. мы его уже забрали, но не выполняем и забираем следующее.
+				// Фактически в этом случае мы очищаем очередь заданий
+				currentErrorsCounter := int(atomic.LoadInt32(&errorsCount))
+				if currentErrorsCounter >= maxErrors {
+					continue
+				}
 
-					// Проверка на общее количество ошибок задач
-					// По условию д/з, если это число > аргумента maxErrors, то задание не выполняется
-					// В этом случае, т.к. мы его уже забрали, но не выполняем и забираем следующее.
-					// Фактически в этом случае мы очищаем очередь заданий
-					currentErrorsCounter := int(atomic.LoadInt32(&errorsCount))
-					if currentErrorsCounter >= maxErrors {
-						continue
-					}
-
-					// Выполняем задачу (функцию)
-					jobFunc := *job
-					if jobFunc() != nil {
-						atomic.AddInt32(&errorsCount, 1)
-					}
-				} else {
-					// Завершение работы воркера
-					// Записываем флажок завершения воркера в канал и выходим
-					done <- true
-					return
+				// Выполняем задачу (функцию)
+				if job() != nil {
+					atomic.AddInt32(&errorsCount, 1)
 				}
 			}
+
+			wg.Done()
 		}()
+		wg.Add(1)
 	}
 
 	// Добавление задач в очередь задач
 	for _, task := range tasks {
-		jobs <- &task
+		jobs <- task
 
 		// Если дистигнут порог ошибок, не добавляем больше заданий
 		// Чисто оптимизация
@@ -67,12 +60,8 @@ func RunTasks(tasks []Task, n int, maxErrors int) {
 		if currentErrorsCounter >= maxErrors {
 			break
 		}
-
 	}
 	close(jobs) // Закрытие очереди
 
-	// Ожидание завершения работы worker'ов
-	for i := 0; i < n; i++ {
-		<-done
-	}
+	wg.Wait()
 }
